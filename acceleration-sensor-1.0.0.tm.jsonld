@@ -1,0 +1,47 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "om2": "http://www.ontology-of-units-of-measure.org/resource/om-2/"
+    }
+  ],
+  "@type": "tm:ThingModel",
+  "title": "Acceleration Sensor",
+  "version": {
+    "model": "1.0.0"
+  },
+  "tm:optional": [],
+    "links": [
+    {
+      "rel": "tm:extends",
+      "href": "https://eclipse-ditto.github.io/ditto-examples/wot/models/sensors/min-max-aware-sensor-1.0.0.tm.jsonld",
+      "type": "application/tm+json"
+    }
+  ]
+  "properties": {
+    "currentAcceleration": {
+      "@type": "om2:Acceleration",
+      "title": "Current acceleration",
+      "description": "The last or current measured acceleration in the three (X/Y/Z) dimensions measured in 'm/s²'.",
+      "type": "object",
+      "properties": {
+        "x": {
+          "title": "X dimension",
+          "type": "number",
+          "unit": "om2:metrePerSecond-TimeSquared"
+        },
+        "y": {
+          "title": "Y dimension",
+          "type": "number",
+          "unit": "om2:metrePerSecond-TimeSquared"
+        },
+        "z": {
+          "title": "Z dimension",
+          "type": "number",
+          "unit": "om2:metrePerSecond-TimeSquared"
+        }
+      },
+      "required": ["x","y","z"]
+    }
+  }
+}
