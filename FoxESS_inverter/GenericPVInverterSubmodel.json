@@ -125,6 +125,12 @@
       "type": "number",
       "unit": "kWh",
       "readOnly": true
+    },
+        "pvEnergyTest": {
+      "title": "PV Energy Test",
+      "type": "number",
+      "unit": "kWh",
+      "readOnly": true
     }
   }
 }
