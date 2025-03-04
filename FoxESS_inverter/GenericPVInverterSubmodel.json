@@ -1,0 +1,130 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "tm": "https://www.w3.org/2022/wot/td/v1.1#tm"
+    }
+  ],
+  "@type": "tm:ThingModel",
+  "title": "Generic PV Inverter Submodel",
+  "description": "Generic submodel for PV generation, grid, meter, load, EPS, etc.",
+  "version": {
+    "model": "0.0.1"
+  },
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": [
+    "nosec_sc"
+  ],
+  "properties": {
+    "pv1Voltage": {
+      "title": "PV1 Voltage",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "pv1Current": {
+      "title": "PV1 Current",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "pv1Power": {
+      "title": "PV1 Power",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "pv2Voltage": {
+      "title": "PV2 Voltage",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "pv2Current": {
+      "title": "PV2 Current",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "pv2Power": {
+      "title": "PV2 Power",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "gridVoltageR": {
+      "title": "Grid Voltage R",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "invCurrentR": {
+      "title": "Inverter Current R",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "invPowerR": {
+      "title": "Inverter Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "gridFrequency": {
+      "title": "Grid Frequency",
+      "type": "number",
+      "unit": "Hz",
+      "readOnly": true
+    },
+    "epsPowerR": {
+      "title": "EPS Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "epsFrequency": {
+      "title": "EPS Frequency",
+      "type": "number",
+      "unit": "Hz",
+      "readOnly": true
+    },
+    "meterPowerR": {
+      "title": "Meter Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "loadPowerR": {
+      "title": "Load Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "inverterTemperature": {
+      "title": "Inverter Temperature",
+      "type": "number",
+      "unit": "°C",
+      "readOnly": true
+    },
+    "inverterStateCode": {
+      "title": "Inverter State Code",
+      "type": "integer",
+      "readOnly": true
+    },
+    "inverterModel": {
+      "title": "Inverter Model",
+      "type": "string",
+      "readOnly": true
+    },
+    "pvEnergyTotal": {
+      "title": "PV Energy Total",
+      "type": "number",
+      "unit": "kWh",
+      "readOnly": true
+    }
+  }
+}
