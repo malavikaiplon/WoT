@@ -1,0 +1,21 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1"
+  ],
+  "@type": "tm:ThingModel",
+  "title": "PV1 Power Submodel",
+  "version": {
+    "model": "1.0.0"
+  },
+
+  "tm:optional": [],
+  "properties": {
+    "pv1Power": {
+      "title": "PV1 Power",
+      "description": "The Power of PV1.",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    }
+  }
+}
