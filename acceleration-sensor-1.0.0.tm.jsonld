@@ -13,7 +13,7 @@
   "links": [
     {
       "rel": "tm:submodel",
-      "href": "https://raw.githubusercontent.com/eclipse-ditto/ditto-examples/refs/heads/master/wot/models/sensors/min-max-aware-sensor-1.0.0.tm.jsonld",
+      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/min-max-aware-sensor-1.0.0.tm.jsonld",
       "type": "application/tm+json",
       "instanceName": "Smoke Detector"
     }
