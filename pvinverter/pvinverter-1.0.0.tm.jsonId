@@ -15,12 +15,6 @@
   "links": [
     {
       "rel": "tm:submodel",
-      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/pvinverter-1.0.0.tm.jsonId",
-      "type": "application/tm+json",
-      "instanceName": "PVInverter"
-    },
-    {
-      "rel": "tm:submodel",
       "href": "https://example.com/wot/models/pv1Voltage-1.0.0.tm.jsonld",
       "type": "application/tm+json",
       "instanceName": "PV1Voltage"
