@@ -1,0 +1,92 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "om2": "http://www.ontology-of-units-of-measure.org/resource/om-2/",
+      "time": "http://www.w3.org/2006/time#"
+    }
+  ],
+  "@type": "tm:ThingModel",
+  "title": "Generic PV Inverter",
+  "description": "A WoT Thing Description for a generic PV inverter.",
+  "version": {
+    "model": "1.0.0"
+  },
+  "links": [
+    {
+      "rel": "tm:submodel",
+      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/pvinverter-1.0.0.tm.jsonId",
+      "type": "application/tm+json",
+      "instanceName": "PVInverter"
+    },
+    {
+      "rel": "tm:submodel",
+      "href": "https://example.com/wot/models/pv1Voltage-1.0.0.tm.jsonld",
+      "type": "application/tm+json",
+      "instanceName": "PV1Voltage"
+    },
+    {
+      "rel": "tm:submodel",
+      "href": "https://example.com/wot/models/pv1Current-1.0.0.tm.jsonld",
+      "type": "application/tm+json",
+      "instanceName": "PV1Current"
+    },
+    {
+      "rel": "tm:submodel",
+      "href": "https://example.com/wot/models/pv1Power-1.0.0.tm.jsonld",
+      "type": "application/tm+json",
+      "instanceName": "PV1Power"
+    },
+    {
+      "rel": "tm:submodel",
+      "href": "https://example.com/wot/models/gridFrequency-1.0.0.tm.jsonld",
+      "type": "application/tm+json",
+      "instanceName": "GridFrequency"
+    },
+    {
+      "rel": "tm:submodel",
+      "href": "https://example.com/wot/models/inverterStateCode-1.0.0.tm.jsonld",
+      "type": "application/tm+json",
+      "instanceName": "InverterStateCode"
+    }
+  ],
+  "tm:optional": [],
+  "properties": {
+    "pv1Voltage": {
+      "title": "PV1 Voltage",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "pv1Current": {
+      "title": "PV1 Current",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "pv1Power": {
+      "title": "PV1 Power",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "gridFrequency": {
+      "title": "Grid Frequency",
+      "type": "number",
+      "unit": "Hz",
+      "readOnly": true
+    },
+    "inverterStateCode": {
+      "title": "Inverter State Code",
+      "type": "integer",
+      "readOnly": true
+    }
+  },
+  "actions": {
+    "resetInverter": {
+      "title": "Reset Inverter",
+      "description": "Resets the inverter to its default state.",
+      "type": "boolean"
+    }
+  }
+}
