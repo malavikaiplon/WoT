@@ -17,7 +17,7 @@
       "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/min-max-aware-sensor-1.0.0.tm.jsonld",
       "type": "application/tm+json"
     }
-  ]
+  ],
   "properties": {
     "currentAcceleration": {
       "@type": "om2:Acceleration",
