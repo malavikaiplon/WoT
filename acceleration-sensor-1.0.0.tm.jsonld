@@ -6,7 +6,8 @@
     }
   ],
   "@type": "tm:ThingModel",
-  "title": "Acceleration Sensor",
+  "title": "Generic PV Inverter Submodel",
+  "description": "Generic submodel for PV generation, grid, meter, load, EPS, etc.",
   "version": {
     "model": "1.0.0"
   }, 
@@ -19,30 +20,4 @@
     }
   ],
   "tm:optional": [],
-  "properties": {
-    "currentAcceleration": {
-      "@type": "om2:Acceleration",
-      "title": "Current acceleration",
-      "description": "The last or current measured acceleration in the three (X/Y/Z) dimensions measured in 'm/s²'.",
-      "type": "object",
-      "properties": {
-        "x": {
-          "title": "X dimension",
-          "type": "number",
-          "unit": "om2:metrePerSecond-TimeSquared"
-        },
-        "y": {
-          "title": "Y dimension",
-          "type": "number",
-          "unit": "om2:metrePerSecond-TimeSquared"
-        },
-        "z": {
-          "title": "Z dimension",
-          "type": "number",
-          "unit": "om2:metrePerSecond-TimeSquared"
-        }
-      },
-      "required": ["x","y","z"]
-    }
-  }
 }
