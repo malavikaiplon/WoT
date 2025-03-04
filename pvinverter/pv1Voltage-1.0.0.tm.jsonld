@@ -7,13 +7,6 @@
   "version": {
     "model": "1.0.0"
   },
-  "links": [
-    {
-      "rel": "tm:extends",
-      "href": "https://example.com/wot/models/voltage-sensor-1.0.0.tm.jsonld",
-      "type": "application/tm+json"
-    }
-  ],
   "tm:optional": [],
   "properties": {
     "pv1Voltage": {
