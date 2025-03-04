@@ -6,8 +6,8 @@
     }
   ],
   "@type": "tm:ThingModel",
-  "title": "Generic PV Inverter",
-  "description": "A WoT Thing Description for a generic PV inverter.",
+  "title": "Generic PV Inverter Submodel",
+  "description": "Generic submodel for PV generation, grid, meter, load, EPS, etc.",
   "version": {
     "model": "0.0.1"
   },
@@ -24,94 +24,107 @@
       "title": "PV1 Voltage",
       "type": "number",
       "unit": "V",
-      "readOnly": true,
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/properties/pv1Voltage",
-          "contentType": "application/json",
-          "op": "readproperty"
-        }
-      ]
+      "readOnly": true
     },
     "pv1Current": {
       "title": "PV1 Current",
       "type": "number",
       "unit": "A",
-      "readOnly": true,
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/properties/pv1Current",
-          "contentType": "application/json",
-          "op": "readproperty"
-        }
-      ]
+      "readOnly": true
     },
     "pv1Power": {
       "title": "PV1 Power",
       "type": "number",
       "unit": "W",
-      "readOnly": true,
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/properties/pv1Power",
-          "contentType": "application/json",
-          "op": "readproperty"
-        }
-      ]
+      "readOnly": true
+    },
+    "pv2Voltage": {
+      "title": "PV2 Voltage",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "pv2Current": {
+      "title": "PV2 Current",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "pv2Power": {
+      "title": "PV2 Power",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "gridVoltageR": {
+      "title": "Grid Voltage R",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "invCurrentR": {
+      "title": "Inverter Current R",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "invPowerR": {
+      "title": "Inverter Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
     },
     "gridFrequency": {
       "title": "Grid Frequency",
       "type": "number",
       "unit": "Hz",
-      "readOnly": true,
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/properties/gridFrequency",
-          "contentType": "application/json",
-          "op": "readproperty"
-        }
-      ]
+      "readOnly": true
+    },
+    "epsPowerR": {
+      "title": "EPS Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "epsFrequency": {
+      "title": "EPS Frequency",
+      "type": "number",
+      "unit": "Hz",
+      "readOnly": true
+    },
+    "meterPowerR": {
+      "title": "Meter Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "loadPowerR": {
+      "title": "Load Power R",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "inverterTemperature": {
+      "title": "Inverter Temperature",
+      "type": "number",
+      "unit": "°C",
+      "readOnly": true
     },
     "inverterStateCode": {
       "title": "Inverter State Code",
       "type": "integer",
-      "readOnly": true,
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/properties/inverterStateCode",
-          "contentType": "application/json",
-          "op": "readproperty"
-        }
-      ]
-    }
-  },
-  "actions": {
-    "resetInverter": {
-      "title": "Reset Inverter",
-      "description": "Resets the inverter to its default state.",
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/actions/resetInverter",
-          "contentType": "application/json",
-          "op": "invokeaction"
-        }
-      ]
-    }
-  },
-  "events": {
-    "faultEvent": {
-      "title": "Fault Event",
-      "description": "Triggered when the inverter encounters a fault.",
-      "data": {
-        "type": "string"
-      },
-      "forms": [
-        {
-          "href": "https://example.com/things/pvinverter/events/faultEvent",
-          "contentType": "application/json",
-          "op": "subscribeevent"
-        }
-      ]
+      "readOnly": true
+    },
+    "inverterModel": {
+      "title": "Inverter Model",
+      "type": "string",
+      "readOnly": true
+    },
+    "pvEnergyTotal": {
+      "title": "PV Energy Total",
+      "type": "number",
+      "unit": "kWh",
+      "readOnly": true
     }
   }
 }
