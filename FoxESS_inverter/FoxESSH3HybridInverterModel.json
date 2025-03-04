@@ -1,0 +1,38 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "tm": "https://www.w3.org/2022/wot/td/v1.1#tm"
+    }
+  ],
+  "@type": "tm:ThingModel",
+  "title": "FoxESS H3 Hybrid Inverter",
+  "description": "A WoT Thing Model for a FoxESS H3 hybrid inverter that references two submodels.",
+  "version": {
+    "model": "0.0.1"
+  },
+  "links": [
+    {
+      "rel": "tm:submodel",
+      "href": "http://host.docker.internal/GenericPVInverterSubmodel.json",
+      "type": "application/vnd.wot.tm+json",
+      "title": "Generic PV Inverter Submodel",
+      "instanceName": "pvInverter"
+    },
+    {
+      "rel": "tm:submodel",
+      "href": "http://host.docker.internal/GenericBatterySubmodel.json",
+      "type": "application/vnd.wot.tm+json",
+      "title": "Generic Battery Submodel",
+      "instanceName": "battery"
+    }
+  ],
+  "properties": {
+    "foxessSpecificProperty": {
+      "title": "FoxESS-Specific Property",
+      "type": "string",
+      "description": "Example property unique to FoxESS H3",
+      "readOnly": true
+    }
+  }
+}
