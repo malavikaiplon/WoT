@@ -1,0 +1,68 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "tm": "https://www.w3.org/2022/wot/td/v1.1#tm"
+    }
+  ],
+  "@type": "tm:ThingModel",
+  "title": "Generic Battery Submodel",
+  "description": "Generic submodel for battery voltage/current, SoC, and battery energy counters.",
+  "version": {
+    "model": "0.0.1"
+  },
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": [
+    "nosec_sc"
+  ],
+  "properties": {
+    "batteryVoltage": {
+      "title": "Battery Voltage",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true
+    },
+    "batteryCurrent": {
+      "title": "Battery Current",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true
+    },
+    "batteryPower": {
+      "title": "Battery Power",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true
+    },
+    "batterySoC": {
+      "title": "Battery State of Charge",
+      "type": "number",
+      "unit": "%",
+      "minimum": 0,
+      "maximum": 100,
+      "readOnly": true
+    },
+    "batteryTemperature": {
+      "title": "Battery Temperature",
+      "type": "number",
+      "unit": "°C",
+      "readOnly": true
+    },
+    "batteryChargeEnergyTotal": {
+      "title": "Battery Charge Energy Total",
+      "type": "number",
+      "unit": "kWh",
+      "readOnly": true
+    },
+    "batteryDischargeEnergyTotal": {
+      "title": "Battery Discharge Energy Total",
+      "type": "number",
+      "unit": "kWh",
+      "readOnly": true
+    }
+  }
+}
