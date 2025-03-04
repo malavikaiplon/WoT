@@ -1,0 +1,117 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "tm": "https://www.w3.org/2022/wot/td/v1.1#tm"
+    }
+  ],
+  "@type": "tm:ThingModel",
+  "title": "Generic PV Inverter",
+  "description": "A WoT Thing Description for a generic PV inverter.",
+  "version": {
+    "model": "0.0.1"
+  },
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": [
+    "nosec_sc"
+  ],
+  "properties": {
+    "pv1Voltage": {
+      "title": "PV1 Voltage",
+      "type": "number",
+      "unit": "V",
+      "readOnly": true,
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/properties/pv1Voltage",
+          "contentType": "application/json",
+          "op": "readproperty"
+        }
+      ]
+    },
+    "pv1Current": {
+      "title": "PV1 Current",
+      "type": "number",
+      "unit": "A",
+      "readOnly": true,
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/properties/pv1Current",
+          "contentType": "application/json",
+          "op": "readproperty"
+        }
+      ]
+    },
+    "pv1Power": {
+      "title": "PV1 Power",
+      "type": "number",
+      "unit": "W",
+      "readOnly": true,
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/properties/pv1Power",
+          "contentType": "application/json",
+          "op": "readproperty"
+        }
+      ]
+    },
+    "gridFrequency": {
+      "title": "Grid Frequency",
+      "type": "number",
+      "unit": "Hz",
+      "readOnly": true,
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/properties/gridFrequency",
+          "contentType": "application/json",
+          "op": "readproperty"
+        }
+      ]
+    },
+    "inverterStateCode": {
+      "title": "Inverter State Code",
+      "type": "integer",
+      "readOnly": true,
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/properties/inverterStateCode",
+          "contentType": "application/json",
+          "op": "readproperty"
+        }
+      ]
+    }
+  },
+  "actions": {
+    "resetInverter": {
+      "title": "Reset Inverter",
+      "description": "Resets the inverter to its default state.",
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/actions/resetInverter",
+          "contentType": "application/json",
+          "op": "invokeaction"
+        }
+      ]
+    }
+  },
+  "events": {
+    "faultEvent": {
+      "title": "Fault Event",
+      "description": "Triggered when the inverter encounters a fault.",
+      "data": {
+        "type": "string"
+      },
+      "forms": [
+        {
+          "href": "https://example.com/things/pvinverter/events/faultEvent",
+          "contentType": "application/json",
+          "op": "subscribeevent"
+        }
+      ]
+    }
+  }
+}
