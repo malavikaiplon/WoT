@@ -21,7 +21,7 @@
     },
     {
       "rel": "tm:submodel",
-      "href": "https://example.com/wot/models/pv1Current-1.0.0.tm.jsonld",
+      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/pvinverter/pv1Current-1.0.0.tm.jsonld",
       "type": "application/tm+json",
       "instanceName": "PV1Current"
     },
