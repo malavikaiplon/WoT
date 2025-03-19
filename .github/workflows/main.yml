@@ -17,7 +17,7 @@ jobs:
         run: |
           echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-          echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=refs/heads/${GITHUB_REF_NAME}" >> $GITHUB_ENV
           echo "FILE_PATH=FoxESSH3HybridInverterModel.json" >> $GITHUB_ENV
 
       - name: Generate Raw GitHub URL
