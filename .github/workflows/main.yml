@@ -1,0 +1,31 @@
+name: Generate Raw GitHub File URL
+
+on:
+  push:
+    paths:
+      - 'FoxESSH3HybridInverterModel.json'  # Trigger if this file changes
+  workflow_dispatch:  # Allows manual execution
+
+jobs:
+  generate-url:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Set Variables
+        run: |
+          echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
+          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "FILE_PATH=FoxESSH3HybridInverterModel.json" >> $GITHUB_ENV
+
+      - name: Generate Raw GitHub URL
+        run: |
+          RAW_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/$BRANCH_NAME/$FILE_PATH"
+          echo "Generated Raw URL: $RAW_URL"
+          echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
+
+      - name: Use the Raw URL (Example)
+        run: |
+          echo "Download the file from: $RAW_FILE_URL"
