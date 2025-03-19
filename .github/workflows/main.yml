@@ -22,7 +22,7 @@ jobs:
 
       - name: Generate Raw GitHub URL
         run: |
-          RAW_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/$BRANCH_NAME/$FILE_PATH"
+          RAW_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/$BRANCH_NAME/FoxESS_inverter/$FILE_PATH"
           echo "Generated Raw URL: $RAW_URL"
           echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
 
