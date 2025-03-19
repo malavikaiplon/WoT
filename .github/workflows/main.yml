@@ -3,7 +3,7 @@ name: Generate Raw GitHub File URL
 on:
   push:
     paths:
-      - 'FoxESSH3HybridInverterModel.json'  # Trigger if this file changes
+      - 'FoxESS_inverter/FoxESSH3HybridInverterModel.json'  # Trigger if this file changes
   workflow_dispatch:  # Allows manual execution
 
 jobs:
