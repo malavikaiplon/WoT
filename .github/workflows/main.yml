@@ -6,7 +6,8 @@ on:
       - '**/*.Model.json'    # Detects changes in main JSON files
       - '**/*.Submodel.json'  # Detects changes in submodel JSON files
   workflow_dispatch:  # Allows manual execution
-
+permissions:
+  contents: write
 jobs:
   update-ditto:
     runs-on: ubuntu-latest
