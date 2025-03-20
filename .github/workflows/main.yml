@@ -1,9 +1,11 @@
-name: Watch JSON Files in "WOT/" Directory
+name: Update Ditto WoT Model
+
 on:
   push:
     paths:
-      - 'FoxESS_inverter/**/*.json'  # Runs when any JSON file inside "thing/" is added or modified
-  workflow_dispatch:  # Allows manual execution from GitHub Actions UI
+      - '**/*.Model.json'    # Detects changes in main JSON files
+      - '**/*.SubModel.json'  # Detects changes in submodel JSON files
+  workflow_dispatch:  # Allows manual execution
 
 jobs:
   update-ditto:
@@ -12,75 +14,90 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 2  # Fetch last 2 commits to compare changes
-
-      - name: Identify Changed JSON Files
-        id: changed_files
-        run: |
-          FILES=$(git diff --name-only HEAD~1 HEAD | grep '^FoxESS_inverter/.*\.json$' || echo "")
-          echo "FILES=$FILES" >> $GITHUB_ENV
-          echo "Changed JSON files: $FILES"
-
-      - name: Check if Any JSON Files Were Changed
-        if: env.FILES == ''
-        run: echo "No JSON file changes detected. Skipping workflow."
-
-      - name: Extract Repository Information
-        run: |
-          echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
-          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-
+      
       - name: Identify Changed JSON Files
         run: |
-          FILE_PATHS=$(git diff --name-only HEAD~1 HEAD | grep 'FoxESS_inverter/.*\.json$' || echo "")
-          echo "CHANGED_FILES=$FILE_PATHS" >> $GITHUB_ENV
-          echo "Modified Files: $FILE_PATHS"
+          FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '.*\.(Model|SubModel)\.json$' || echo "")
+          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+          echo "Modified Files: $FILES_CHANGED"
+
+      - name: Extract Names from Changed Files
+        run: |
+          MODEL_FILES=()
+          SUBMODEL_FILES=()
           
-      - name: Fetch Private Raw File URL
+          for FILE in $FILES_CHANGED; do
+            BASE_NAME=$(basename "$FILE" | sed -E 's/\.(Model|SubModel)\.json$//')
+            if [[ "$FILE" == *".Model.json" ]]; then
+              MODEL_FILES+=("$BASE_NAME")
+            elif [[ "$FILE" == *".SubModel.json" ]]; then
+              SUBMODEL_FILES+=("$BASE_NAME")
+            fi
+          done
+
+          echo "MODEL_FILES=${MODEL_FILES[@]}" >> $GITHUB_ENV
+          echo "SUBMODEL_FILES=${SUBMODEL_FILES[@]}" >> $GITHUB_ENV
+          echo "Detected Model Files: ${MODEL_FILES[@]}"
+          echo "Detected SubModel Files: ${SUBMODEL_FILES[@]}"
+
+      - name: Fetch Private GitHub Raw URLs
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          if [ -n "$CHANGED_FILES" ]; then
-            for FILE in $CHANGED_FILES; do
-              API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE?ref=refs/heads/$BRANCH_NAME"
-              RAW_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
-              echo "Private Raw URL for $FILE: $RAW_URL"
-              echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
-            done
-          else
-            echo "No modified JSON files found."
-          fi
-          
-      - name: Update Ditto Thing with WoT Definition
-        if: env.RAW_FILE_URL != ''
+          UPDATED_MODELS=()
+
+          for MODEL_NAME in $MODEL_FILES; do
+            MODEL_PATH=$(find . -type f -name "$MODEL_NAME.Model.json")
+            SUBMODEL_PATH=$(find . -type f -name "$MODEL_NAME.SubModel.json")
+
+            # Get GitHub API URLs
+            MODEL_URL="https://api.github.com/repos/${{ github.repository }}/contents/$MODEL_PATH?ref=${{ github.ref_name }}"
+            SUBMODEL_URL="https://api.github.com/repos/${{ github.repository }}/contents/$SUBMODEL_PATH?ref=${{ github.ref_name }}"
+
+            # Fetch GitHub raw URLs
+            MODEL_RAW_URL=$(curl -s -H "Authorization: token $GH_PAT" "$MODEL_URL" | jq -r '.download_url')
+            SUBMODEL_RAW_URL=$(curl -s -H "Authorization: token $GH_PAT" "$SUBMODEL_URL" | jq -r '.download_url')
+
+            echo "Fetched Model URL: $MODEL_RAW_URL"
+            echo "Fetched SubModel URL: $SUBMODEL_RAW_URL"
+
+            # Update JSON definition dynamically
+            jq --arg submodelUrl "$SUBMODEL_RAW_URL" '.definition = $submodelUrl' "$MODEL_PATH" > temp.json && mv temp.json "$MODEL_PATH"
+            UPDATED_MODELS+=("$MODEL_PATH")
+          done
+
+          echo "UPDATED_MODELS=${UPDATED_MODELS[@]}" >> $GITHUB_ENV
+
+      - name: Commit and Push Updated JSON
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Updated model definitions with correct submodel URLs" || echo "No changes to commit"
+          git push origin ${{ github.ref_name }}
+
+      - name: Upload to Ditto
         env:
           DITTO_URL: "https://ritter-ditto.iplon.co.in/api/2/things"
           DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
         run: |
-          THING_ID="dev.test:wotdevice"
-          POLICY_ID="device.test:policy"
-          
-          JSON_PAYLOAD=$(jq -n \
-            --arg policyId "$POLICY_ID" \
-            --arg definition "$RAW_FILE_URL" \
-            '{policyId: $policyId, definition: $definition}')
+          for MODEL_PATH in $UPDATED_MODELS; do
+            MODEL_NAME=$(basename "$MODEL_PATH")
+            THING_ID="dev:${MODEL_NAME%.Model.json}"
 
-          echo "Updating Ditto with Definition: $JSON_PAYLOAD"
+            JSON_PAYLOAD=$("policyId": "device.test:policy", "definition": cat "$MODEL_PATH")
 
-          STATUS_CODE=$(curl -s -o response.json -w "%{http_code}" -X PUT "$DITTO_URL/$THING_ID" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $DITTO_AUTH" \
-            --data-raw "$JSON_PAYLOAD")
+            echo "Uploading Thing to Ditto: $THING_ID"
+            STATUS_CODE=$(curl -s -o response.json -w "%{http_code}" -X PUT "$DITTO_URL/$THING_ID" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Basic $DITTO_AUTH" \
+              --data-binary "$JSON_PAYLOAD")
 
-          echo "Ditto Response:"
-          cat response.json
-          
-          if [[ "$STATUS_CODE" -ne 200 && "$STATUS_CODE" -ne 204 ]]; then
-            echo "❌ ERROR: Ditto API returned status code $STATUS_CODE"
-            exit 1
-          fi
-
-          echo "✅ Successfully updated Ditto Thing: $THING_ID"
-
+            echo "Ditto Response:"
+            cat response.json
+            
+            if [[ "$STATUS_CODE" -ne 200 && "$STATUS_CODE" -ne 204 ]]; then
+              echo "❌ ERROR: Ditto API returned status code $STATUS_CODE"
+              exit 1
+            fi
+          done
