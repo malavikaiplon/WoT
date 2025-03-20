@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '**/*.Model.json'    # Detects changes in main JSON files
-      - '**/*.SubModel.json'  # Detects changes in submodel JSON files
+      - '**/*.Submodel.json'  # Detects changes in submodel JSON files
   workflow_dispatch:  # Allows manual execution
 
 jobs:
