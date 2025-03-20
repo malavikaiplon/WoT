@@ -1,31 +1,46 @@
-name: Generate Raw GitHub File URL
+name: Generate Private Raw File URL
 
 on:
   push:
     paths:
-      - 'FoxESS_inverter/FoxESSH3HybridInverterModel.json'  # Trigger if this file changes
+      - 'FoxESS_inverter/**/*.json'  # Trigger when any JSON file in this directory is modified
   workflow_dispatch:  # Allows manual execution
 
 jobs:
-  generate-url:
+  get-raw-url:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
       
-      - name: Set Variables
+      - name: Extract Repository Information
         run: |
           echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-          echo "BRANCH_NAME=refs/heads/${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          echo "FILE_PATH=FoxESSH3HybridInverterModel.json" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
-      - name: Generate Raw GitHub URL
+      - name: Identify Changed JSON Files
         run: |
-          RAW_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/$BRANCH_NAME/FoxESS_inverter/$FILE_PATH"
-          echo "Generated Raw URL: $RAW_URL"
-          echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
+          FILE_PATHS=$(git diff --name-only HEAD~1 HEAD | grep 'FoxESS_inverter/.*\.json$' || echo "")
+          echo "CHANGED_FILES=$FILE_PATHS" >> $GITHUB_ENV
+          echo "Modified Files: $FILE_PATHS"
 
-      - name: Use the Raw URL (Example)
+      - name: Fetch Private Raw File URL
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Download the file from: $RAW_FILE_URL"
+          if [ -n "$CHANGED_FILES" ]; then
+            for FILE in $CHANGED_FILES; do
+              API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE?ref=$BRANCH_NAME"
+              RAW_URL=$(curl -s -H "Authorization: token $GH_TOKEN" "$API_URL" | jq -r '.download_url')
+              echo "Private Raw URL for $FILE: $RAW_URL"
+              echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
+            done
+          else
+            echo "No modified JSON files found."
+          fi
+
+      - name: Display Generated URL
+        run: |
+          echo "✅ Download the private file from: $RAW_FILE_URL"
