@@ -1,35 +1,27 @@
-name: Generate Raw GitHub File URL
-
+name: Watch JSON Files in "WOT/" Directory
 on:
   push:
     paths:
-      - 'FoxESS_inverter/**'  # Triggers when any file inside FoxESS_inverter/ is modified
-  workflow_dispatch:  # Allows manual execution
+      - 'FoxESS_inverter/**/*.json'  # Runs when any JSON file inside "thing/" is added or modified
+  workflow_dispatch:  # Allows manual execution from GitHub Actions UI
 
 jobs:
-  generate-url:
+  update-ditto:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      
-      - name: Set Variables
-        run: |
-          echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
-          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-          echo "BRANCH_NAME=refs/heads/${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          echo "FILE_PATH=$(git diff --name-only HEAD~1 HEAD | grep 'FoxESS_inverter/' || echo '')" >> $GITHUB_ENV
+        with:
+          fetch-depth: 2  # Fetch last 2 commits to compare changes
 
-      - name: Generate Raw GitHub URL
+      - name: Identify Changed JSON Files
+        id: changed_files
         run: |
-          if [ -n "$FILE_PATH" ]; then
-            RAW_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/$BRANCH_NAME/$FILE_PATH"
-            echo "Generated Raw URL: $RAW_URL"
-            echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
-          else
-            echo "No matching files changed in the FoxESS_inverter directory."
-          fi
+          FILES=$(git diff --name-only HEAD~1 HEAD | grep '^FoxESS_inverter/.*\.json$' || echo "")
+          echo "FILES=$FILES" >> $GITHUB_ENV
+          echo "Changed JSON files: $FILES"
 
-      - name: Output Raw URL
-        run: |
-          echo "Download the file from: $RAW_FILE_URL"
+      - name: Check if Any JSON Files Were Changed
+        if: env.FILES == ''
+        run: echo "No JSON file changes detected. Skipping workflow."
