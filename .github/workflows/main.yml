@@ -40,12 +40,12 @@ jobs:
           
       - name: Fetch Private Raw File URL
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           if [ -n "$CHANGED_FILES" ]; then
             for FILE in $CHANGED_FILES; do
               API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE?ref=refs/heads/$BRANCH_NAME"
-              RAW_URL=$(curl -s -H "Authorization: token $GH_TOKEN" "$API_URL" | jq -r '.download_url')
+              RAW_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
               echo "Private Raw URL for $FILE: $RAW_URL"
               echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
             done
