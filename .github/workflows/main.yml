@@ -3,8 +3,8 @@ name: Update Ditto WoT Model
 on:
   push:
     paths:
-      - '**/*.Model.json'    # Detects changes in main JSON files
-      - '**/*.Submodel.json'  # Detects changes in submodel JSON files
+      - 'FoxESS_inverter/*.Model.json'    # Detects changes in main JSON files
+      - 'FoxESS_inverter/*.Submodel.json'  # Detects changes in submodel JSON files
   workflow_dispatch:  # Allows manual execution
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
       
       - name: Identify Changed JSON Files
         run: |
-          FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '.*\.(Model|SubModel)\.json$' || echo "")
+          FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '.*\.(Model|Submodel)\.json$' || echo "")
           echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
           echo "Modified Files: $FILES_CHANGED"
 
@@ -28,7 +28,7 @@ jobs:
           SUBMODEL_FILES=()
           
           for FILE in $FILES_CHANGED; do
-            BASE_NAME=$(basename "$FILE" | sed -E 's/\.(Model|SubModel)\.json$//')
+            BASE_NAME=$(basename "$FILE" | sed -E 's/\.(Model|Submodel)\.json$//')
             if [[ "$FILE" == *".Model.json" ]]; then
               MODEL_FILES+=("$BASE_NAME")
             elif [[ "$FILE" == *".SubModel.json" ]]; then
