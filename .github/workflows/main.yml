@@ -1,46 +1,43 @@
-name: Generate Private Raw File URL
+name: Generate Private Raw GitHub File URL
 
 on:
   push:
     paths:
-      - 'FoxESS_inverter/**/*.json'  # Trigger when any JSON file in this directory is modified
+      - 'FoxESS_inverter/**'  # Trigger when any file in this directory is modified
   workflow_dispatch:  # Allows manual execution
 
 jobs:
-  get-raw-url:
+  generate-private-url:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
       
-      - name: Extract Repository Information
+      - name: Set Variables
         run: |
           echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
           echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          echo "FILE_PATH=$(git diff --name-only HEAD~1 HEAD | grep 'FoxESS_inverter/' || echo '')" >> $GITHUB_ENV
 
-      - name: Identify Changed JSON Files
+      - name: Generate Private GitHub API URL
         run: |
-          FILE_PATHS=$(git diff --name-only HEAD~1 HEAD | grep 'FoxESS_inverter/.*\.json$' || echo "")
-          echo "CHANGED_FILES=$FILE_PATHS" >> $GITHUB_ENV
-          echo "Modified Files: $FILE_PATHS"
-
-      - name: Fetch Private Raw File URL
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -n "$CHANGED_FILES" ]; then
-            for FILE in $CHANGED_FILES; do
-              API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE?ref=$BRANCH_NAME"
-              RAW_URL=$(curl -s -H "Authorization: token $GH_TOKEN" "$API_URL" | jq -r '.download_url')
-              echo "Private Raw URL for $FILE: $RAW_URL"
-              echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
-            done
+          if [ -n "$FILE_PATH" ]; then
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH_NAME"
+            AUTH_HEADER="Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+            echo "API_URL=$API_URL" >> $GITHUB_ENV
           else
-            echo "No modified JSON files found."
+            echo "No matching files changed in the FoxESS_inverter directory."
           fi
 
-      - name: Display Generated URL
+      - name: Fetch Raw File URL
         run: |
-          echo "✅ Download the private file from: $RAW_FILE_URL"
+          if [ -n "$API_URL" ]; then
+            RAW_URL=$(curl -s -H "$AUTH_HEADER" "$API_URL" | jq -r '.download_url')
+            echo "Generated Private Raw URL: $RAW_URL"
+            echo "RAW_FILE_URL=$RAW_URL" >> $GITHUB_ENV
+          fi
+
+      - name: Output Raw URL
+        run: |
+          echo "Download the private file from: $RAW_FILE_URL"
