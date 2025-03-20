@@ -7,7 +7,7 @@
   ],
   "@type": "tm:ThingModel",
   "title": "FoxESS H3 Hybrid Inverter",
-  "description": "A WoT Thing Model for a FoxESS H3 hybrid inverter that references twosubmodels-TESTING FOR RAW URL-9",
+  "description": "A WoT Thing Model for a FoxESS H3 hybrid inverter that references twosubmodels-TESTING FOR RAW URL-10",
   "version": {
     "model": "0.0.1"
   },
