@@ -52,7 +52,35 @@ jobs:
           else
             echo "No modified JSON files found."
           fi
-
-      - name: Display Generated URL
+          
+      - name: Update Ditto Thing with WoT Definition
+        if: env.RAW_FILE_URL != ''
+        env:
+          DITTO_URL: "https://ritter-ditto.iplon.co.in/api/2/things"
+          DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
         run: |
-          echo "✅ Download the private file from: $RAW_FILE_URL"
+          THING_ID="dev.test:wotdevice"
+          POLICY_ID="device.test:policy"
+          
+          JSON_PAYLOAD=$(jq -n \
+            --arg policyId "$POLICY_ID" \
+            --arg definition "$RAW_FILE_URL" \
+            '{policyId: $policyId, definition: $definition}')
+
+          echo "Updating Ditto with Definition: $JSON_PAYLOAD"
+
+          STATUS_CODE=$(curl -s -o response.json -w "%{http_code}" -X PUT "$DITTO_URL/$THING_ID" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $DITTO_AUTH" \
+            --data-raw "$JSON_PAYLOAD")
+
+          echo "Ditto Response:"
+          cat response.json
+          
+          if [[ "$STATUS_CODE" -ne 200 && "$STATUS_CODE" -ne 204 ]]; then
+            echo "❌ ERROR: Ditto API returned status code $STATUS_CODE"
+            exit 1
+          fi
+
+          echo "✅ Successfully updated Ditto Thing: $THING_ID"
+
