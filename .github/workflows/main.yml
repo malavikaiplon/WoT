@@ -59,7 +59,7 @@ jobs:
           DITTO_URL: "https://ritter-ditto.iplon.co.in/api/2/things"
           DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
         run: |
-          THING_ID="dev.test:wotdevice"
+          THING_ID="iplon.INV-1567:MAS-0012"
           POLICY_ID="device.test:policy"
           
           JSON_PAYLOAD=$(jq -n \
