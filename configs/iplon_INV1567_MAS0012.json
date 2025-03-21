@@ -1,0 +1,7 @@
+{
+  "tenant": "iplon",
+  "gateway": "INV1567",
+  "location": "germany",
+  "manufacturer": "re",
+  "policyId": "device.test:policy"
+}
