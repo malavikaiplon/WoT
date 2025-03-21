@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0  # ✅ Full history for diff
 
       - name: Show Commit Range
-        run: echo "Diffing commits:${{ github.event.before }} → ${{ github.sha }}"
+        run: echo "Diffing commits: ${{ github.event.before }} → ${{ github.sha }}"
 
       - name: Get changed config files
         id: files
@@ -60,7 +60,7 @@ jobs:
               echo "🗑️ Delete status: $DELETE_STATUS"
             fi
 
-            # Create thing with WoT TD definition
+            # Build create payload
             CREATE_PAYLOAD=$(jq -n \
               --arg pid "$POLICY_ID" \
               --arg def "$TD_URL" \
@@ -68,28 +68,40 @@ jobs:
 
             echo "Creating Thing with payload: $CREATE_PAYLOAD"
 
-            CREATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
+            # Create thing with WoT TD definition and capture response
+            CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
               --data-raw "$CREATE_PAYLOAD")
 
+            # Extract response body and status code
+            CREATE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+            CREATE_STATUS=$(echo "$CREATE_RESPONSE" | tail -n1)
+
             if [[ ! "$CREATE_STATUS" =~ ^2 ]]; then
-              echo "❌ Failed to create Thing [$THING_ID] — Status: $CREATE_STATUS"
+              echo "❌ Failed to create Thing [$THING_ID]"
+              echo "Status Code: $CREATE_STATUS"
+              echo "Response Body: $CREATE_BODY"
               exit 1
             fi
 
             echo "✅ Thing [$THING_ID] created with WoT definition"
 
             # Patch attributes
-            PATCH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
+            PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
               -d "{\"attributes\": $ATTRIBUTES}")
 
+            PATCH_BODY=$(echo "$PATCH_RESPONSE" | sed '$d')
+            PATCH_STATUS=$(echo "$PATCH_RESPONSE" | tail -n1)
+
             if [[ "$PATCH_STATUS" =~ ^2 ]]; then
               echo "✅ Attributes patched successfully"
             else
-              echo "❌ Failed to patch attributes: $PATCH_STATUS"
+              echo "❌ Failed to patch attributes"
+              echo "Status Code: $PATCH_STATUS"
+              echo "Response Body: $PATCH_BODY"
               exit 1
             fi
 
