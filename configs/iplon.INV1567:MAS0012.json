@@ -1,7 +1,7 @@
 {
   "tenant": "iplon",
   "gateway": "INV1567",
-  "location": "germany",
+  "location": "Germany",
   "manufacturer": "Ritter-Energy",
   "policyId": "device.test:policy"
 }
