@@ -69,7 +69,7 @@ jobs:
 
           echo "Updating Ditto with Definition: $JSON_PAYLOAD"
 
-          STATUS_CODE=$(curl -s -o response.json -w "%{http_code}" -X PUT "$DITTO_URL/$THING_ID" \
+          STATUS_CODE=$(curl -s -o response.json -w "%{http_code}" -X PATCH "$DITTO_URL/$THING_ID" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $DITTO_AUTH" \
             --data-raw "$JSON_PAYLOAD")
