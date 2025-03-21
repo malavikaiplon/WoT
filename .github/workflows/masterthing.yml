@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0  # ✅ Full history for diff
 
       - name: Show Commit Range
-        run: echo "Diffing commits: ${{ github.event.before }} → ${{ github.sha }}"
+        run: echo "Diffing commits:${{ github.event.before }} → ${{ github.sha }}"
 
       - name: Get changed config files
         id: files
@@ -47,7 +47,7 @@ jobs:
             echo "Attributes: $ATTRIBUTES"
 
             # Raw WoT TD definition URL with token
-            TD_URL="https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/masterthing.json?token=$GH_PAT"
+            TD_URL="https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/masterthing.json"
 
             # Check if thing exists
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
