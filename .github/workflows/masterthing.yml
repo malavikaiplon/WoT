@@ -1,0 +1,90 @@
+name: Sync Ditto Thing from Config File
+
+on:
+  push:
+    paths:
+      - 'configs/*.json'
+
+jobs:
+  recreate-ditto-thing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get changed config files
+        id: files
+        run: |
+          echo "CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'configs/.*\.json$' || echo '')" >> $GITHUB_OUTPUT
+
+      - name: Process each changed config file
+        if: steps.files.outputs.CHANGED != ''
+        env:
+          DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
+          DITTO_HOST: 'https://ritter-ditto.iplon.co.in'
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          for FILE in $(echo "${{ steps.files.outputs.CHANGED }}"); do
+            echo "📦 Processing $FILE"
+
+            # Extract thing ID from filename (remove .json)
+            THING_ID=$(basename "$FILE" .json)
+            echo "🆔 Thing ID = $THING_ID"
+
+            # Extract config values
+            POLICY_ID=$(jq -r '.policyId' "$FILE")
+            ATTRIBUTES=$(jq -c 'del(.policyId)' "$FILE")
+
+            echo "Policy ID: $POLICY_ID"
+            echo "Attributes: $ATTRIBUTES"
+
+            # Raw TD URL with GH_PAT token
+            TD_URL="https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/masterthing.json?token=$GH_PAT"
+
+            # Delete existing thing if it exists
+            EXISTS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
+              -H "Authorization: Basic $DITTO_AUTH")
+
+            if [[ "$EXISTS" == "200" ]]; then
+              echo "🔁 Thing [$THING_ID] exists, deleting..."
+              DELETE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
+                -H "Authorization: Basic $DITTO_AUTH")
+              echo "🗑️ Delete status: $DELETE_STATUS"
+            fi
+
+            # Create thing with WoT TD definition
+            CREATE_PAYLOAD=$(jq -n \
+              --arg tid "$THING_ID" \
+              --arg pid "$POLICY_ID" \
+              --arg def "$TD_URL" \
+              '{thingId: $tid, policyId: $pid, definition: $def}')
+
+            echo "Creating Thing with payload: $CREATE_PAYLOAD"
+
+            CREATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
+              -H "Authorization: Basic $DITTO_AUTH" \
+              -H "Content-Type: application/json" \
+              --data-raw "$CREATE_PAYLOAD")
+
+            if [[ ! "$CREATE_STATUS" =~ ^2 ]]; then
+              echo "❌ Failed to create Thing [$THING_ID] — Status: $CREATE_STATUS"
+              exit 1
+            fi
+
+            echo "✅ Thing [$THING_ID] created with WoT definition"
+
+            # Patch attributes
+            PATCH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
+              -H "Authorization: Basic $DITTO_AUTH" \
+              -H "Content-Type: application/json" \
+              -d "{\"attributes\": $ATTRIBUTES}")
+
+            if [[ "$PATCH_STATUS" =~ ^2 ]]; then
+              echo "✅ Attributes patched successfully"
+            else
+              echo "❌ Failed to patch attributes: $PATCH_STATUS"
+              exit 1
+            fi
+
+          done
