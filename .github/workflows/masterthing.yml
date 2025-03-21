@@ -51,12 +51,12 @@ jobs:
 
             # Check if thing exists
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
-              -H "Authorization: Basic $DITTO_AUTH")
+              -H "Authorization: Bearer $DITTO_AUTH")
 
             if [[ "$STATUS" == "200" ]]; then
               echo "🔁 Thing [$THING_ID] exists, deleting..."
               DELETE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
-                -H "Authorization: Basic $DITTO_AUTH")
+                -H "Authorization: Bearer $DITTO_AUTH")
               echo "🗑️ Delete status: $DELETE_STATUS"
             fi
 
@@ -70,7 +70,7 @@ jobs:
             echo "Creating Thing with payload: $CREATE_PAYLOAD"
 
             CREATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
-              -H "Authorization: Basic $DITTO_AUTH" \
+              -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
               --data-raw "$CREATE_PAYLOAD")
 
@@ -83,7 +83,7 @@ jobs:
 
             # Patch attributes
             PATCH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
-              -H "Authorization: Basic $DITTO_AUTH" \
+              -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
               -d "{\"attributes\": $ATTRIBUTES}")
 
