@@ -16,7 +16,7 @@ jobs:
       - name: Get changed config files
         id: files
         run: |
-          echo "CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'configs/.*\.json$' || echo '')" >> $GITHUB_OUTPUT
+          echo "CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^configs/.*\.json$' || echo "") >> $GITHUB_OUTPUT
 
       - name: Process each changed config file
         if: steps.files.outputs.CHANGED != ''
