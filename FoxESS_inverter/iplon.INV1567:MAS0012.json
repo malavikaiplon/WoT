@@ -1,6 +1,6 @@
 {
   "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
-  "@type": "Thing",
+  "@type": "tm:ThingModel",
   "title": "CDT Master Device",
   "version": {
     "model": "1.0.0"
@@ -9,22 +9,18 @@
     "tenant": {
       "type": "string",
       "readOnly": true,
-      "value":"iplon"
     },
       "gateway": {
       "type": "string",
       "readOnly": true,
-      "value":"INV1567"
     },     
      "location": {
       "type": "string",
       "readOnly": true,
-       "value":"Germany"
     },
      "manufacturer": {
       "type": "string",
       "readOnly": true,
-      "value":"Ritter"
     }
   }
 }
