@@ -62,10 +62,9 @@ jobs:
 
             # Create thing with WoT TD definition
             CREATE_PAYLOAD=$(jq -n \
-              --arg tid "$THING_ID" \
               --arg pid "$POLICY_ID" \
               --arg def "$TD_URL" \
-              '{thingId: $tid, policyId: $pid, definition: $def}')
+              '{policyId: $pid, definition: $def}')
 
             echo "Creating Thing with payload: $CREATE_PAYLOAD"
 
