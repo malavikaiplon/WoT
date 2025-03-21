@@ -22,7 +22,7 @@
       "type": "string",
       "readOnly": true
     },    
-    "model": {
+    "Model": {
       "type": "string",
       "readOnly": true
     }
