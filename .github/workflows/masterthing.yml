@@ -12,23 +12,30 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ✅ Full history for diff
+
+      - name: Show Commit Range
+        run: echo "Diffing commits:${{ github.event.before }} → ${{ github.sha }}"
 
       - name: Get changed config files
         id: files
         run: |
-          echo "CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^configs/.*\.json$' || echo "") >> $GITHUB_OUTPUT
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^configs/.*\.json$' || true)
+          echo "CHANGED=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Detected changed files: $CHANGED"
 
       - name: Process each changed config file
         if: steps.files.outputs.CHANGED != ''
         env:
           DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
-          DITTO_HOST: 'https://ritter-ditto.iplon.co.in'
+          DITTO_HOST: ${{ secrets.DITTO_HOST }}
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          for FILE in $(echo "${{ steps.files.outputs.CHANGED }}"); do
-            echo "📦 Processing $FILE"
+          for FILE in ${{ steps.files.outputs.CHANGED }}; do
+            echo "📦 Processing file: $FILE"
 
-            # Extract thing ID from filename (remove .json)
+            # Derive Thing ID from filename (remove path and .json)
             THING_ID=$(basename "$FILE" .json)
             echo "🆔 Thing ID = $THING_ID"
 
@@ -39,14 +46,14 @@ jobs:
             echo "Policy ID: $POLICY_ID"
             echo "Attributes: $ATTRIBUTES"
 
-            # Raw TD URL with GH_PAT token
+            # Raw WoT TD definition URL with token
             TD_URL="https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/masterthing.json?token=$GH_PAT"
 
-            # Delete existing thing if it exists
-            EXISTS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
+            # Check if thing exists
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Basic $DITTO_AUTH")
 
-            if [[ "$EXISTS" == "200" ]]; then
+            if [[ "$STATUS" == "200" ]]; then
               echo "🔁 Thing [$THING_ID] exists, deleting..."
               DELETE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
                 -H "Authorization: Basic $DITTO_AUTH")
