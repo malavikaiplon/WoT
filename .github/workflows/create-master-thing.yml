@@ -50,8 +50,15 @@ jobs:
             echo "Policy ID: $POLICY_ID"
             echo "Attributes: $ATTRIBUTES"
 
-            # Fixed TD URL (always masterthing.json)
-            TD_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/refs/heads/$BRANCH_NAME/FoxESS_inverter/masterthing.json?token=$GH_PAT"
+
+            # 🛠️ Use GitHub API to fetch signed raw URL of masterthing.json from private repo
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/masterthing.json?ref=refs/heads/$BRANCH_NAME"
+            TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+
+          if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
+              echo "❌ TD definition URL not found for masterthing.json"
+              exit 1
+              fi
             echo "🌐 Using WoT TD URL: $TD_URL"
 
             # Check if Thing exists
