@@ -47,7 +47,7 @@ jobs:
             echo "Attributes: $ATTRIBUTES"
 
             # Raw WoT TD definition URL with token
-            TD_URL="https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/masterthing.json?token=$GH_PAT"
+            TD_URL="https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/masterthing.json?token=AZF4PN3EGWKUAC6KUTG4FMLH3UI36"
 
             # Check if thing exists
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
