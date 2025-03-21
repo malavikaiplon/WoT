@@ -21,6 +21,10 @@
     "manufacturer": {
       "type": "string",
       "readOnly": true
+    },    
+    "model": {
+      "type": "string",
+      "readOnly": true
     }
   }
 }
