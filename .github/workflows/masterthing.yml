@@ -90,7 +90,7 @@ jobs:
             # Patch attributes
             PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
-              -H "Content-Type: application/json" \
+              -H "Content-Type: application/merge-patch+json" \
               -d "{\"attributes\": $ATTRIBUTES}")
 
             PATCH_BODY=$(echo "$PATCH_RESPONSE" | sed '$d')
