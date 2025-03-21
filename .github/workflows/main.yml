@@ -77,7 +77,7 @@ jobs:
           echo "Ditto Response:"
           cat response.json
           
-          if [[ "$STATUS_CODE" -ne 200 && "$STATUS_CODE" -ne 204 ]]; then
+          if [[ ! "$STATUS_CODE" =~ ^2 ]];; then
             echo "❌ ERROR: Ditto API returned status code $STATUS_CODE"
             exit 1
           fi
