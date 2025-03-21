@@ -8,7 +8,6 @@
   "properties": {
     "tenant": {
       "type": "string",
-      "value": "iplon" 
       "readOnly": true
     },
       "gateway": {
