@@ -15,9 +15,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Show Commit Range
-        run: echo "Diffing commits:${{ github.event.before }} → ${{ github.sha }}"
-
       - name: Extract Repository Information
         run: |
           echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
@@ -29,27 +26,8 @@ jobs:
         run: |
           CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^configs/.*\.json$' || true)
           echo "CHANGED=$CHANGED" >> $GITHUB_OUTPUT
-          echo "Detected changed files: $CHANGED"
           echo "CHANGED_FILES=$CHANGED" >> $GITHUB_ENV
-
-      - name: Fetch Private Raw File URL
-        if: env.CHANGED_FILES != ''
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          for FILE in $CHANGED_FILES; do
-            echo "🔍 Fetching Raw URL for $FILE"
-            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE?ref=refs/heads/$BRANCH_NAME"
-            RAW_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
-
-            if [ "$RAW_URL" = "null" ]; then
-              echo "❌ Could not get raw URL for $FILE"
-              exit 1
-            fi
-
-            echo "✅ Raw URL: $RAW_URL"
-            echo "RAW_URL_$FILE=$RAW_URL" >> $GITHUB_ENV
-          done
+          echo "Detected changed files: $CHANGED"
 
       - name: Process each changed config file
         if: steps.files.outputs.CHANGED != ''
@@ -61,7 +39,7 @@ jobs:
           for FILE in $CHANGED_FILES; do
             echo "📦 Processing file: $FILE"
 
-            # Extract thing ID from file name
+            # Derive Thing ID from filename
             THING_ID=$(basename "$FILE" .json)
             echo "🆔 Thing ID = $THING_ID"
 
@@ -72,16 +50,9 @@ jobs:
             echo "Policy ID: $POLICY_ID"
             echo "Attributes: $ATTRIBUTES"
 
-            # Build WoT TD definition URL (secure with GH_PAT if needed)
-            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE?ref=refs/heads/$BRANCH_NAME"
-            TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
-
-            if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
-              echo "❌ TD definition URL not found for $FILE"
-              exit 1
-            fi
-
-            echo "🌐 TD definition URL: $TD_URL"
+            # Fixed TD URL (always masterthing.json)
+            TD_URL="https://raw.githubusercontent.com/$ORG_NAME/$REPO_NAME/refs/heads/$BRANCH_NAME/FoxESS_inverter/masterthing.json?token=$GH_PAT"
+            echo "🌐 Using WoT TD URL: $TD_URL"
 
             # Check if Thing exists
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
@@ -94,7 +65,7 @@ jobs:
               echo "🗑️ Delete status: $DELETE_STATUS"
             fi
 
-            # Build creation payload
+            # Build Thing creation payload
             CREATE_PAYLOAD=$(jq -n \
               --arg pid "$POLICY_ID" \
               --arg def "$TD_URL" \
@@ -118,7 +89,7 @@ jobs:
               exit 1
             fi
 
-            echo "✅ Thing [$THING_ID] created with WoT definition"
+            echo "✅ Thing [$THING_ID] created with WoT TD"
 
             # Patch attributes
             PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
