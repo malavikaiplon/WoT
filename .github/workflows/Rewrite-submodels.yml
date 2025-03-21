@@ -1,23 +1,25 @@
-name: Rewrite submodel URLs with signed GitHub links
+name: Rewrite Submodel URLs in masterthing.json
 
 on:
-  workflow_dispatch:  # Manual trigger (you can also use push event)
+  push:
+    paths:
+      - 'FoxESS_inverter/fieldthing.json'  # Run only when masterthing.json changes
 
 jobs:
   rewrite-submodels:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Install jq
         run: sudo apt-get install -y jq
 
-      - name: Rewrite submodel URLs in masterthing.json
+      - name: Rewrite submodel URLs in fieldthing.json
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-          REPO: ${{ github.repository }}  # e.g. my-org/my-private-repo
+          REPO: ${{ github.repository }}  # e.g. org/repo
           BRANCH: ${{ github.ref_name }}  # e.g. main
         run: |
           ORG_NAME=$(echo "$REPO" | cut -d/ -f1)
@@ -32,24 +34,23 @@ jobs:
           for HREF in $HREFS; do
             echo "➡️ Found href: $HREF"
 
-            # Extract relative file path from GitHub-style URL
+            # Extract path after /blob/main/
             FILE_PATH=$(echo "$HREF" | sed -E "s|https://github.com/$ORG_NAME/$REPO_NAME/blob/$BRANCH/||")
 
-            echo "📁 Resolved submodel path: $FILE_PATH"
+            echo "📁 Resolved path: $FILE_PATH"
 
-            # Call GitHub API to get download_url
+            # Use GitHub API to get the signed raw URL
             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH"
             DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
 
             if [[ "$DOWNLOAD_URL" == "null" || -z "$DOWNLOAD_URL" ]]; then
-              echo "❌ Failed to resolve signed URL for $FILE_PATH"
+              echo "❌ Could not resolve download_url for $FILE_PATH"
               exit 1
             fi
 
-            echo "✅ Signed URL: $DOWNLOAD_URL"
-            # Replace the href in the file
+            echo "✅ Replacing $HREF with signed URL: $DOWNLOAD_URL"
             sed -i "s|$HREF|$DOWNLOAD_URL|g" "$FILE"
           done
 
-          echo "✅ Updated $FILE with signed submodel URLs:"
+          echo "✅ Final updated $FILE:"
           cat "$FILE"
