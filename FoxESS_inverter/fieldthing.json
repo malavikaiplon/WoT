@@ -27,11 +27,25 @@
       "instanceName": "battery"
     }
   ],
-  "properties": {
-    "foxessSpecificProperty": {
-      "title": "FoxESS-Specific Property",
+"properties": {
+    "tenant": {
       "type": "string",
-      "description": "Example property unique to FoxESS H3",
+      "readOnly": true
+    },
+    "gateway": {
+      "type": "string",
+      "readOnly": true
+    },
+    "location": {
+      "type": "string",
+      "readOnly": true
+    },
+    "manufacturer": {
+      "type": "string",
+      "readOnly": true
+    },
+      "parent": {
+      "type": "string",
       "readOnly": true
     }
   }
