@@ -21,6 +21,9 @@ jobs:
           echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
           echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      - name: Clean up expired tokens in fieldthing.json
+        run: |
+          sed -i -E 's|(https://raw\.githubusercontent\.com/[^"]+)\?token=[^"]+|\1|g' FoxESS_inverter/fieldthing.json
 
       - name: Rewrite submodel URLs in fieldthing.json
         env:
