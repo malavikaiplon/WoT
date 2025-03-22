@@ -24,7 +24,19 @@ jobs:
       - name: Clean up expired tokens in fieldthing.json
         run: |
           sed -i -E 's|(https://raw\.githubusercontent\.com/[^"]+)\?token=[^"]+|\1|g' FoxESS_inverter/fieldthing.json
+      - name: Commit cleaned fieldthing.json (remove expired tokens)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add FoxESS_inverter/fieldthing.json
 
+          if git diff --cached --quiet; then
+            echo "🟢 No cleanup needed"
+          else
+            git commit -m "🧹 Clean expired tokens from fieldthing.json"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+            echo "✅ Cleanup committed!"
+          fi
       - name: Rewrite submodel URLs in fieldthing.json
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
