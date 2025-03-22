@@ -4,8 +4,10 @@ on:
   push:
     paths:
       - 'field-configs/*.json'
+
 permissions:
   contents: write
+
 jobs:
   recreate-ditto-thing:
     runs-on: ubuntu-latest
@@ -21,22 +23,27 @@ jobs:
           echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
           echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-      - name: Clean up expired tokens in fieldthing.json
-        run: |
-          sed -i -E 's|(https://raw\.githubusercontent\.com/[^"]+)\?token=[^"]+|\1|g' FoxESS_inverter/fieldthing.json
-      - name: Commit cleaned fieldthing.json (remove expired tokens)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add FoxESS_inverter/fieldthing.json
 
-          if git diff --cached --quiet; then
-            echo "🟢 No cleanup needed"
-          else
-            git commit -m "🧹 Clean expired tokens from fieldthing.json"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
-            echo "✅ Cleanup committed!"
-          fi
+      - name: Normalize raw links back to blob links in fieldthing.json
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          FILE=FoxESS_inverter/fieldthing.json
+          echo "🔧 Resetting raw links in $FILE to blob links..."
+
+          jq -r '.links[].href' "$FILE" | while read -r HREF; do
+            if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
+              CLEAN_PATH=$(echo "$HREF" | sed -E 's|https://raw\.githubusercontent\.com/||' | cut -d'?' -f1)
+              ORG=$(echo "$CLEAN_PATH" | cut -d/ -f1)
+              REPO=$(echo "$CLEAN_PATH" | cut -d/ -f2)
+              BRANCH=$(echo "$CLEAN_PATH" | cut -d/ -f3)
+              REL_PATH=$(echo "$CLEAN_PATH" | cut -d/ -f4-)
+              BLOB_LINK="https://github.com/$ORG/$REPO/blob/$BRANCH/$REL_PATH"
+              sed -i "s|$HREF|$BLOB_LINK|g" "$FILE"
+            fi
+          done
+
       - name: Rewrite submodel URLs in fieldthing.json
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -51,13 +58,9 @@ jobs:
 
           HREFS=$(jq -r '.links[].href' "$FILE")
           for HREF in $HREFS; do
-            echo "➡️ Found href: $HREF"
-
             if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
-              echo "🔁 Skipping already-signed raw URL"
               continue
             fi
-
             FILE_PATH=$(echo "$HREF" | sed -E "s|https://github.com/$ORG_NAME/$REPO_NAME/blob/$BRANCH/||")
             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH"
             DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
@@ -66,13 +69,8 @@ jobs:
               echo "❌ Could not resolve download_url for $FILE_PATH"
               exit 1
             fi
-
-            echo "✅ Replacing $HREF with signed URL: $DOWNLOAD_URL"
             sed -i "s|$HREF|$DOWNLOAD_URL|g" "$FILE"
           done
-
-          echo "✅ Final updated $FILE:"
-          cat "$FILE"
 
       - name: Commit updated fieldthing.json to repo
         run: |
@@ -83,9 +81,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "🟢 No changes to commit"
           else
-            git commit -m "🔁 Auto-rewrite submodel URLs in fieldthing.json"
-            git push origin ${{ github.ref_name }}
-            echo "✅ Changes pushed!"
+            git commit -m "🔁 Rewrite submodel URLs in fieldthing.json"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
 
       - name: Get changed field config files
@@ -94,7 +91,6 @@ jobs:
           CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^field-configs/.*\.json$' || true)
           echo "CHANGED=$CHANGED" >> $GITHUB_OUTPUT
           echo "CHANGED_FILES=$CHANGED" >> $GITHUB_ENV
-          echo "Detected changed files: $CHANGED"
 
       - name: Process each changed field config file
         if: steps.files.outputs.CHANGED != ''
@@ -107,75 +103,45 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           for FILE in $CHANGED_FILES; do
-            echo "📦 Processing file: $FILE"
-
             THING_ID=$(basename "$FILE" .json)
-            echo "🆔 Thing ID = $THING_ID"
-
             POLICY_ID=$(jq -r '.policyId' "$FILE")
             ATTRIBUTES=$(jq -c 'del(.policyId)' "$FILE")
-
-            echo "Policy ID: $POLICY_ID"
-            echo "Attributes: $ATTRIBUTES"
 
             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/fieldthing.json?ref=refs/heads/$BRANCH_NAME"
             TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
 
             if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
-              echo "❌ TD definition URL not found for fieldthing.json"
+              echo "❌ TD definition URL not found"
               exit 1
             fi
-
-            echo "🌐 Using WoT TD URL: $TD_URL"
 
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH")
 
             if [[ "$STATUS" == "200" ]]; then
-              echo "🔁 Thing [$THING_ID] exists, deleting..."
-              DELETE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
-                -H "Authorization: Bearer $DITTO_AUTH")
-              echo "🗑️ Delete status: $DELETE_STATUS"
+              curl -s -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
+                -H "Authorization: Bearer $DITTO_AUTH"
             fi
 
-            CREATE_PAYLOAD=$(jq -n \
-              --arg pid "$POLICY_ID" \
-              --arg def "$TD_URL" \
-              '{policyId: $pid, definition: $def}')
+            CREATE_PAYLOAD=$(jq -n --arg pid "$POLICY_ID" --arg def "$TD_URL" '{policyId: $pid, definition: $def}')
 
-            echo "🛠️ Creating Thing with payload: $CREATE_PAYLOAD"
-
-            CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
+            CREATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
               --data-raw "$CREATE_PAYLOAD")
 
-            CREATE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
-            CREATE_STATUS=$(echo "$CREATE_RESPONSE" | tail -n1)
-
             if [[ ! "$CREATE_STATUS" =~ ^2 ]]; then
               echo "❌ Failed to create Thing [$THING_ID]"
-              echo "Status Code: $CREATE_STATUS"
-              echo "Response Body: $CREATE_BODY"
               exit 1
             fi
 
-            echo "✅ Thing [$THING_ID] created with WoT TD"
-
-            PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
+            PATCH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/merge-patch+json" \
               -d "{\"attributes\": $ATTRIBUTES}")
 
-            PATCH_BODY=$(echo "$PATCH_RESPONSE" | sed '$d')
-            PATCH_STATUS=$(echo "$PATCH_RESPONSE" | tail -n1)
-
-            if [[ "$PATCH_STATUS" =~ ^2 ]]; then
-              echo "✅ Attributes patched successfully"
-            else
+            if [[ ! "$PATCH_STATUS" =~ ^2 ]]; then
               echo "❌ Failed to patch attributes"
-              echo "Status Code: $PATCH_STATUS"
-              echo "Response Body: $PATCH_BODY"
               exit 1
             fi
           done
