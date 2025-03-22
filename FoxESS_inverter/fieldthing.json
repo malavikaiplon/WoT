@@ -15,7 +15,7 @@
     {
       "rel": "tm:submodel",
       "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/refs/heads/main/FoxESS_inverter/GenericPVInverterSubmodel.json",
-      "type": "application/tm+json",
+      "type": "application/vnd.wot.tm+json",
       "title": "Generic PV Inverter Submodel",
       "instanceName": "pvInverter"
     },
