@@ -58,6 +58,20 @@ jobs:
           echo "✅ Final updated $FILE:"
           cat "$FILE"
 
+      - name: Commit updated fieldthing.json to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add FoxESS_inverter/fieldthing.json
+
+          if git diff --cached --quiet; then
+            echo "🟢 No changes to commit"
+          else
+            git commit -m "🔁 Auto-rewrite submodel URLs in fieldthing.json"
+            git push origin ${{ github.ref_name }}
+            echo "✅ Changes pushed!"
+          fi
+
       - name: Get changed field config files
         id: files
         run: |
@@ -88,7 +102,6 @@ jobs:
             echo "Policy ID: $POLICY_ID"
             echo "Attributes: $ATTRIBUTES"
 
-            # Get signed URL of updated fieldthing.json
             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/fieldthing.json?ref=refs/heads/$BRANCH_NAME"
             TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
 
