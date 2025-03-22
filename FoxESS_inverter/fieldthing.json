@@ -14,14 +14,14 @@
   "links": [
     {
       "rel": "tm:submodel",
-      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/main/FoxESS_inverter/GenericPVInverterSubmodel.json?token=AZF4PN6WGKIITROZK2QUDODH3ZT5C",
+      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/main/FoxESS_inverter/GenericPVInverterSubmodel.json",
       "type": "application/vnd.wot.tm+json",
       "title": "Generic PV Inverter Submodel",
       "instanceName": "pvInverter"
     },
     {
       "rel": "tm:submodel",
-      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/main/FoxESS_inverter/GenericBatterySubmodel.json?token=AZF4PN5YTNWFOOZ4PWXWCBDH3ZT5C",
+      "href": "https://raw.githubusercontent.com/malavikaiplon/WoT/main/FoxESS_inverter/GenericBatterySubmodel.json",
       "type": "application/vnd.wot.tm+json",
       "title": "Generic Battery Submodel",
       "instanceName": "battery"
