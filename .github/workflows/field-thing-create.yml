@@ -1,0 +1,118 @@
+name: Sync Ditto Thing from field Config File
+
+on:
+  push:
+    paths:
+      - 'field-configs/*.json'
+
+jobs:
+  recreate-ditto-thing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Extract Repository Information
+        run: |
+          echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
+          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Get changed field config files
+        id: files
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^field-configs/.*\.json$' || true)
+          echo "CHANGED=$CHANGED" >> $GITHUB_OUTPUT
+          echo "CHANGED_FILES=$CHANGED" >> $GITHUB_ENV
+          echo "Detected changed files: $CHANGED"
+
+      - name: Process each changed field config file
+        if: steps.files.outputs.CHANGED != ''
+        env:
+          DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
+          DITTO_HOST: ${{ secrets.DITTO_HOST }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          for FILE in $CHANGED_FILES; do
+            echo "📦 Processing file: $FILE"
+
+            # Derive Thing ID from filename
+            THING_ID=$(basename "$FILE" .json)
+            echo "🆔 Thing ID = $THING_ID"
+
+            # Extract policy ID and attributes
+            POLICY_ID=$(jq -r '.policyId' "$FILE")
+            ATTRIBUTES=$(jq -c 'del(.policyId)' "$FILE")
+
+            echo "Policy ID: $POLICY_ID"
+            echo "Attributes: $ATTRIBUTES"
+
+
+            # 🛠️ Use GitHub API to fetch signed raw URL of masterthing.json from private repo
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/fieldthing.json?ref=refs/heads/$BRANCH_NAME"
+            TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+
+          if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
+              echo "❌ TD definition URL not found for masterthing.json"
+              exit 1
+              fi
+            echo "🌐 Using WoT TD URL: $TD_URL"
+
+            # Check if Thing exists
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
+              -H "Authorization: Bearer $DITTO_AUTH")
+
+            if [[ "$STATUS" == "200" ]]; then
+              echo "🔁 Thing [$THING_ID] exists, deleting..."
+              DELETE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
+                -H "Authorization: Bearer $DITTO_AUTH")
+              echo "🗑️ Delete status: $DELETE_STATUS"
+            fi
+
+            # Build Thing creation payload
+            CREATE_PAYLOAD=$(jq -n \
+              --arg pid "$POLICY_ID" \
+              --arg def "$TD_URL" \
+              '{policyId: $pid, definition: $def}')
+
+            echo "🛠️ Creating Thing with payload: $CREATE_PAYLOAD"
+
+            # Create Thing
+            CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
+              -H "Authorization: Bearer $DITTO_AUTH" \
+              -H "Content-Type: application/json" \
+              --data-raw "$CREATE_PAYLOAD")
+
+            CREATE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+            CREATE_STATUS=$(echo "$CREATE_RESPONSE" | tail -n1)
+
+            if [[ ! "$CREATE_STATUS" =~ ^2 ]]; then
+              echo "❌ Failed to create Thing [$THING_ID]"
+              echo "Status Code: $CREATE_STATUS"
+              echo "Response Body: $CREATE_BODY"
+              exit 1
+            fi
+
+            echo "✅ Thing [$THING_ID] created with WoT TD"
+
+            # Patch attributes
+            PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
+              -H "Authorization: Bearer $DITTO_AUTH" \
+              -H "Content-Type: application/merge-patch+json" \
+              -d "{\"attributes\": $ATTRIBUTES}")
+
+            PATCH_BODY=$(echo "$PATCH_RESPONSE" | sed '$d')
+            PATCH_STATUS=$(echo "$PATCH_RESPONSE" | tail -n1)
+
+            if [[ "$PATCH_STATUS" =~ ^2 ]]; then
+              echo "✅ Attributes patched successfully"
+            else
+              echo "❌ Failed to patch attributes"
+              echo "Status Code: $PATCH_STATUS"
+              echo "Response Body: $PATCH_BODY"
+              exit 1
+            fi
+          done
