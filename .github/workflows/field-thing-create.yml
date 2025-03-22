@@ -21,6 +21,43 @@ jobs:
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
           echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
+      - name: Rewrite submodel URLs in fieldthing.json
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          ORG_NAME=$(echo "$REPO" | cut -d/ -f1)
+          REPO_NAME=$(echo "$REPO" | cut -d/ -f2)
+          FILE=FoxESS_inverter/fieldthing.json
+
+          echo "🔍 Rewriting submodel links in $FILE"
+
+          HREFS=$(jq -r '.links[].href' "$FILE")
+          for HREF in $HREFS; do
+            echo "➡️ Found href: $HREF"
+
+            if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
+              echo "🔁 Skipping already-signed raw URL"
+              continue
+            fi
+
+            FILE_PATH=$(echo "$HREF" | sed -E "s|https://github.com/$ORG_NAME/$REPO_NAME/blob/$BRANCH/||")
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH"
+            DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+
+            if [[ "$DOWNLOAD_URL" == "null" || -z "$DOWNLOAD_URL" ]]; then
+              echo "❌ Could not resolve download_url for $FILE_PATH"
+              exit 1
+            fi
+
+            echo "✅ Replacing $HREF with signed URL: $DOWNLOAD_URL"
+            sed -i "s|$HREF|$DOWNLOAD_URL|g" "$FILE"
+          done
+
+          echo "✅ Final updated $FILE:"
+          cat "$FILE"
+
       - name: Get changed field config files
         id: files
         run: |
@@ -35,33 +72,33 @@ jobs:
           DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
           DITTO_HOST: ${{ secrets.DITTO_HOST }}
           GH_PAT: ${{ secrets.GH_PAT }}
+          ORG_NAME: ${{ env.ORG_NAME }}
+          REPO_NAME: ${{ env.REPO_NAME }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           for FILE in $CHANGED_FILES; do
             echo "📦 Processing file: $FILE"
 
-            # Derive Thing ID from filename
             THING_ID=$(basename "$FILE" .json)
             echo "🆔 Thing ID = $THING_ID"
 
-            # Extract policy ID and attributes
             POLICY_ID=$(jq -r '.policyId' "$FILE")
             ATTRIBUTES=$(jq -c 'del(.policyId)' "$FILE")
 
             echo "Policy ID: $POLICY_ID"
             echo "Attributes: $ATTRIBUTES"
 
-
-            # 🛠️ Use GitHub API to fetch signed raw URL of masterthing.json from private repo
+            # Get signed URL of updated fieldthing.json
             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/fieldthing.json?ref=refs/heads/$BRANCH_NAME"
             TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
 
-          if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
-              echo "❌ TD definition URL not found for masterthing.json"
+            if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
+              echo "❌ TD definition URL not found for fieldthing.json"
               exit 1
-              fi
+            fi
+
             echo "🌐 Using WoT TD URL: $TD_URL"
 
-            # Check if Thing exists
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH")
 
@@ -72,7 +109,6 @@ jobs:
               echo "🗑️ Delete status: $DELETE_STATUS"
             fi
 
-            # Build Thing creation payload
             CREATE_PAYLOAD=$(jq -n \
               --arg pid "$POLICY_ID" \
               --arg def "$TD_URL" \
@@ -80,7 +116,6 @@ jobs:
 
             echo "🛠️ Creating Thing with payload: $CREATE_PAYLOAD"
 
-            # Create Thing
             CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
@@ -98,7 +133,6 @@ jobs:
 
             echo "✅ Thing [$THING_ID] created with WoT TD"
 
-            # Patch attributes
             PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/merge-patch+json" \
