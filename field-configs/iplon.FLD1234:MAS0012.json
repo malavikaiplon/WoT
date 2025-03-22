@@ -2,7 +2,7 @@
   "tenant": "iplon",
   "gateway": "INV1567",
   "location": "Germany",
-  "manufacturer": "Ritter-Energie",
+  "manufacturer": "RitterEnergie",
   "policyId": "device.test:policy",
   "parent":"iplon.INV1567:MAS0012"
 }
