@@ -1,9 +1,9 @@
-name: Rewrite Submodel URLs in masterthing.json
+name: Rewrite Submodel URLs in fieldthing.json
 
 on:
   push:
     paths:
-      - 'FoxESS_inverter/fieldthing.json'  # Run only when masterthing.json changes
+      - 'FoxESS_inverter/fieldthing.json'
 
 jobs:
   rewrite-submodels:
@@ -32,28 +32,36 @@ jobs:
           HREFS=$(jq -r '.links[].href' "$FILE")
 
           for HREF in $HREFS; do
-          echo "➡️ Found href: $HREF"
+            echo "➡️ Found href: $HREF"
 
-           # Skip already signed raw URLs
-             if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
+            # Skip already signed raw URLs
+            if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
               echo "🔁 Skipping already-signed raw URL: $HREF"
               continue
-              fi
+            fi
 
+            # Extract path from GitHub blob URL
             FILE_PATH=$(echo "$HREF" | sed -E "s|https://github.com/$ORG_NAME/$REPO_NAME/blob/$BRANCH/||")
 
-              echo "📁 Resolved path: $FILE_PATH"
-             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH"
-              DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+            if [[ -z "$FILE_PATH" || "$FILE_PATH" == "$HREF" ]]; then
+              echo "⚠️ Unable to extract submodel path from $HREF — skipping"
+              continue
+            fi
 
-                if [[ "$DOWNLOAD_URL" == "null" || -z "$DOWNLOAD_URL" ]]; then
-                  echo "❌ Could not resolve download_url for $FILE_PATH"
-                      exit 1
-                          fi
+            echo "📁 Resolved GitHub path: $FILE_PATH"
 
-                echo "✅ Replacing $HREF with signed URL: $DOWNLOAD_URL"
-                    sed -i "s|$HREF|$DOWNLOAD_URL|g" "$FILE"
-                      done
+            # Use GitHub API to get signed raw download_url
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH"
+            DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+
+            if [[ "$DOWNLOAD_URL" == "null" || -z "$DOWNLOAD_URL" ]]; then
+              echo "❌ Could not resolve download_url for $FILE_PATH"
+              exit 1
+            fi
+
+            echo "✅ Replacing $HREF with signed URL: $DOWNLOAD_URL"
+            sed -i "s|$HREF|$DOWNLOAD_URL|g" "$FILE"
+          done
 
           echo "✅ Final updated $FILE:"
           cat "$FILE"
