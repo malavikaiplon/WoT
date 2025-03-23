@@ -5,10 +5,10 @@
   "manufacturer": "Ritter-Energie",
   "policyId": "device.test:policy",
   "parent":"iplon.INV1567:MAS0012"
-  "field_devices":{
+  "field_devices":[
     "iplon.FLD1234:MAS0012",
     "iplon.FLD1235:MAS0012",
     "iplon.FLD1236:MAS0012",
     "iplon.FLD1237:MAS0012"
-  }
+  ]
 }
