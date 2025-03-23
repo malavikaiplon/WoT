@@ -3,7 +3,7 @@ name: CREATE MASTER Ditto Thing from Config File
 on:
   push:
     paths:
-      - 'configs/*.json'
+      - 'master-configs/*.json'
 
 jobs:
   recreate-ditto-thing:
@@ -24,7 +24,7 @@ jobs:
       - name: Get changed config files
         id: files
         run: |
-          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^configs/.*\.json$' || true)
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^master-configs/.*\.json$' || true)
           echo "CHANGED=$CHANGED" >> $GITHUB_OUTPUT
           echo "CHANGED_FILES=$CHANGED" >> $GITHUB_ENV
           echo "Detected changed files: $CHANGED"
