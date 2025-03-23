@@ -1,4 +1,4 @@
-name: Sync Ditto Thing from Config File
+name: CREATE MASTER Ditto Thing from Config File
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
             echo "📦 Processing file: $FILE"
 
             # Derive Thing ID from filename
-            THING_ID=$(basename "$FILE" .json)
+            THING_ID=$(jq -r '.tenant' "$FILE")+"."+$(jq -r '.gateway' "$FILE")+":"+$(jq -r '.master' "$FILE")
             echo "🆔 Thing ID = $THING_ID"
 
             # Extract policy ID and attributes
