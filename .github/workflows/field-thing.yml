@@ -1,0 +1,182 @@
+name: create Ditto Things from field Config File
+
+on:
+  push:
+    paths:
+      - 'field-configs/*.json'
+
+permissions:
+  contents: write
+
+jobs:
+  recreate-ditto-thing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Extract Repository Information
+        run: |
+          echo "ORG_NAME=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
+          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Clean up expired tokens in fieldthing.json
+        run: |
+          sed -i -E 's|(https://raw\.githubusercontent\.com/[^\"]+)\?token=[^\"]+|\1|g' FoxESS_inverter/fieldthing.json
+
+      - name: Commit cleaned fieldthing.json (remove expired tokens)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add FoxESS_inverter/fieldthing.json
+
+          if git diff --cached --quiet; then
+            echo "🟢 No cleanup needed"
+          else
+            git commit -m "🧹 Clean expired tokens from fieldthing.json"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+            echo "✅ Cleanup committed!"
+          fi
+
+      - name: Reset expired raw URLs to GitHub blob links
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          FILE=FoxESS_inverter/fieldthing.json
+          echo "🔧 Cleaning $FILE to restore blob links from raw URLs..."
+
+          jq -r '.links[].href' "$FILE" | while read -r HREF; do
+            if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
+              CLEAN_PATH=$(echo "$HREF" | sed -E 's|https://raw\.githubusercontent\.com/||' | cut -d'?' -f1)
+              ORG=$(echo "$CLEAN_PATH" | cut -d/ -f1)
+              REPO=$(echo "$CLEAN_PATH" | cut -d/ -f2)
+              BRANCH=$(echo "$CLEAN_PATH" | cut -d/ -f3)
+              REL_PATH=$(echo "$CLEAN_PATH" | cut -d/ -f4-)
+
+              BLOB_LINK="https://github.com/$ORG/$REPO/blob/$BRANCH/$REL_PATH"
+              echo "🔁 Restoring $HREF → $BLOB_LINK"
+              sed -i "s|$HREF|$BLOB_LINK|g" "$FILE"
+            fi
+          done
+
+          echo "✅ Normalized $FILE"
+
+      - name: Rewrite submodel URLs in fieldthing.json
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          ORG_NAME=$(echo "$REPO" | cut -d/ -f1)
+          REPO_NAME=$(echo "$REPO" | cut -d/ -f2)
+          FILE=FoxESS_inverter/fieldthing.json
+
+          echo "🔍 Rewriting submodel links in $FILE"
+
+          HREFS=$(jq -r '.links[].href' "$FILE")
+          for HREF in $HREFS; do
+            if [[ "$HREF" == https://raw.githubusercontent.com* ]]; then
+              echo "🔁 Skipping already-signed raw URL"
+              continue
+            fi
+
+            FILE_PATH=$(echo "$HREF" | sed -E "s|https://github.com/$ORG_NAME/$REPO_NAME/blob/$BRANCH/||")
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH"
+            DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+
+            if [[ "$DOWNLOAD_URL" == "null" || -z "$DOWNLOAD_URL" ]]; then
+              echo "❌ Could not resolve download_url for $FILE_PATH"
+              exit 1
+            fi
+
+            echo "✅ Replacing $HREF with signed URL: $DOWNLOAD_URL"
+            sed -i "s|$HREF|$DOWNLOAD_URL|g" "$FILE"
+          done
+
+      - name: Commit updated fieldthing.json to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add FoxESS_inverter/fieldthing.json
+
+          if git diff --cached --quiet; then
+            echo "🟢 No changes to commit"
+          else
+            git commit -m "🔁 Auto-rewrite submodel URLs in fieldthing.json"
+            git push origin ${{ github.ref_name }}
+            echo "✅ Changes pushed!"
+          fi
+
+      - name: Get changed field config files
+        id: files
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^field-configs/.*\.json$' || true)
+          echo "CHANGED=$CHANGED" >> $GITHUB_OUTPUT
+          echo "CHANGED_FILES=$CHANGED" >> $GITHUB_ENV
+
+      - name: Process each changed field config file
+        if: steps.files.outputs.CHANGED != ''
+        env:
+          DITTO_AUTH: ${{ secrets.DITTO_AUTH }}
+          DITTO_HOST: ${{ secrets.DITTO_HOST }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          ORG_NAME: ${{ env.ORG_NAME }}
+          REPO_NAME: ${{ env.REPO_NAME }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          for FILE in $CHANGED_FILES; do
+            echo "📦 Processing file: $FILE"
+
+            POLICY_ID=$(jq -r '.policyId' "$FILE")
+            ATTRIBUTES=$(jq -c 'del(.policyId, .field_devices)' "$FILE")
+            FIELD_DEVICES=$(jq -r '.field_devices[]' "$FILE")
+
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/fieldthing.json?ref=refs/heads/$BRANCH_NAME"
+            TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
+
+            if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
+              echo "❌ TD definition URL not found"
+              exit 1
+            fi
+
+            for THING_ID in $FIELD_DEVICES; do
+              echo "🆔 Creating Thing ID: $THING_ID"
+
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$DITTO_HOST/api/2/things/$THING_ID" \
+                -H "Authorization: Bearer $DITTO_AUTH")
+
+              if [[ "$STATUS" == "200" ]]; then
+                curl -s -X DELETE "$DITTO_HOST/api/2/things/$THING_ID" \
+                  -H "Authorization: Bearer $DITTO_AUTH"
+              fi
+
+              CREATE_PAYLOAD=$(jq -n --arg pid "$POLICY_ID" --arg def "$TD_URL" '{policyId: $pid, definition: $def}')
+
+              CREATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
+                -H "Authorization: Bearer $DITTO_AUTH" \
+                -H "Content-Type: application/json" \
+                --data-raw "$CREATE_PAYLOAD")
+
+              if [[ ! "$CREATE_STATUS" =~ ^2 ]]; then
+                echo "❌ Failed to create Thing [$THING_ID]"
+                exit 1
+              fi
+
+              PATCH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
+                -H "Authorization: Bearer $DITTO_AUTH" \
+                -H "Content-Type: application/merge-patch+json" \
+                -d "{\"attributes\": $ATTRIBUTES}")
+
+              if [[ ! "$PATCH_STATUS" =~ ^2 ]]; then
+                echo "❌ Failed to patch attributes for $THING_ID"
+                exit 1
+              else
+                echo "✅ Thing [$THING_ID] created and patched"
+              fi
+            done
+          done
