@@ -1,0 +1,71 @@
+    {
+  "tenant": "iplon",
+  "gateway": "create",
+  "location": "Germany",
+  "manufacturer": "Ritter-Energie ",
+  "policyId": "device.test:policy",
+  "master":"test",
+  "devices": [
+      {
+        "apiVersion": "v3",
+        "device": {
+          "name": "iplon.FLD1235:MAS0012",
+          "description": "FoxESS inverter via Modbus TCP",
+          "adminState": "UNLOCKED",
+          "operatingState": "UP",
+          "labels": [
+            "pv",
+            "inverter",
+            "modbus-tcp"
+          ],
+          "serviceName": "device-modbus",
+          "profileName": "pv-inverter-battery-foxess-h3-profile-grouped",
+          "autoEvents": [
+            {
+              "interval": "20s",
+              "onChange": false,
+              "sourceName": "INVERETR-VALUES"
+            }
+          ],
+          "protocols": {
+            "modbus-tcp": {
+              "Address": "192.168.1.43",
+              "Port": "1502",
+              "UnitID": "1",
+              "Timeout": 10,
+              "IdleTimeout": 10
+            }
+          }
+        }
+      },
+      {
+        "apiVersion": "v3",
+        "device": {
+          "name": "iplon.FLD1236:MAS0012",
+          "description": "FoxESS inverter via Modbus RTU",
+          "adminState": "UNLOCKED",
+          "operatingState": "UP",
+          "labels": [
+            "pv",
+            "inverter",
+            "modbus-rtu"
+          ],
+          "serviceName": "device-modbus",
+          "profileName": "pv-inverter-battery-foxess-h3-profile-grouped",
+          "autoEvents": [],
+          "protocols": {
+            "modbus-rtu": {
+              "Address": "/tmp/slave",
+              "UnitID": "1",
+              "BaudRate": "19200",
+              "DataBits": "8",
+              "StopBits": "1",
+              "Parity": "N",
+              "Timeout": 10,
+              "IdleTimeout": 10
+            }
+          }
+        }
+      }
+    ]
+}
