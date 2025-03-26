@@ -52,7 +52,7 @@ jobs:
 
 
             # 🛠️ Use GitHub API to fetch signed raw URL of masterthing.json from private repo
-            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/masterthing.json?ref=refs/heads/$BRANCH_NAME"
+            API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/masterthingtest.json?ref=refs/heads/$BRANCH_NAME"
             TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
 
           if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
