@@ -38,6 +38,38 @@
           }
         }
       },
+       {
+        "apiVersion": "v3",
+        "device": {
+          "name": "iplon.FLD1237:MAS0012",
+          "description": "FoxESS inverter via Modbus TCP",
+          "adminState": "UNLOCKED",
+          "operatingState": "UP",
+          "labels": [
+            "pv",
+            "inverter",
+            "modbus-tcp"
+          ],
+          "serviceName": "device-modbus",
+          "profileName": "pv-inverter-battery-foxess-h3-profile-grouped",
+          "autoEvents": [
+            {
+              "interval": "20s",
+              "onChange": false,
+              "sourceName": "INVERETR-VALUES"
+            }
+          ],
+          "protocols": {
+            "modbus-tcp": {
+              "Address": "192.168.1.43",
+              "Port": "1502",
+              "UnitID": "1",
+              "Timeout": 10,
+              "IdleTimeout": 10
+            }
+          }
+        }
+      },
       {
         "apiVersion": "v3",
         "device": {
