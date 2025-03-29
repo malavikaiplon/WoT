@@ -10,7 +10,7 @@
   "version": {
     "model": "1.0.0"
   },
-  "description": "WoT Thing Model for a MasterThing managing multiple EdgeX-based Modbus devices.",
+  "description": "WoT Thing Model for a MasterThing managing multiple EdgeX-based Modbus devices",
   "properties": {
     "tenant": {
       "type": "string",
