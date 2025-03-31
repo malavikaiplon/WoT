@@ -1,10 +1,16 @@
 {
-  "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1",
+    {
+      "tm": "https://www.w3.org/2019/wot/td#"
+    }
+  ],
   "@type": "tm:ThingModel",
-  "title": "CDT Master Device ",
+  "title": "CDT Master Device",
   "version": {
-    "model": "1.0.0"
+    "version": "1.0.0"
   },
+  "description": "WoT Thing Model for a MasterThing managing multiple EdgeX-based Modbus devices",
   "properties": {
     "tenant": {
       "type": "string",
@@ -21,6 +27,76 @@
     "manufacturer": {
       "type": "string",
       "readOnly": true
+    },
+    "master": {
+      "type": "string",
+      "readOnly": true
+    },
+      "type": {
+      "type": "string",
+      "readOnly": true
+    },
+     "model": {
+      "type": "string",
+      "readOnly": true
+    },
+    "devices": {
+      "type": "array",
+      "readOnly": true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "adminState": { "type": "string", "enum": ["UNLOCKED", "LOCKED"] },
+          "operatingState": { "type": "string", "enum": ["UP", "DOWN", "UNKNOWN"] },
+          "labels": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "serviceName": { "type": "string" },
+          "profileName": { "type": "string" },
+          "autoEvents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "interval": { "type": "string" },
+                "onChange": { "type": "boolean" },
+                "sourceName": { "type": "string" }
+              }
+            }
+          },
+          "protocols": {
+            "type": "object",
+            "properties": {
+              "modbus-tcp": {
+                "type": "object",
+                "properties": {
+                  "Address": { "type": "string" },
+                  "Port": { "type": "string" },
+                  "UnitID": { "type": "string" },
+                  "Timeout": { "type": "number" },
+                  "IdleTimeout": { "type": "number" }
+                }
+              },
+              "modbus-rtu": {
+                "type": "object",
+                "properties": {
+                  "Address": { "type": "string" },
+                  "UnitID": { "type": "string" },
+                  "BaudRate": { "type": "string" },
+                  "DataBits": { "type": "string" },
+                  "StopBits": { "type": "string" },
+                  "Parity": { "type": "string" },
+                  "Timeout": { "type": "number" },
+                  "IdleTimeout": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
