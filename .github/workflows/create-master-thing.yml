@@ -76,7 +76,7 @@ jobs:
             # Build Thing creation payload
             CREATE_PAYLOAD=$(jq -n \
               --arg pid "$POLICY_ID" \
-              --arg def "$CLOUD_TD" \
+              --arg def "$TD_URL" \
               '{policyId: $pid, definition: $def}')
 
             echo "🛠️ Creating Thing with payload: $CREATE_PAYLOAD"
