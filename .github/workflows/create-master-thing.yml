@@ -81,7 +81,7 @@ jobs:
             echo "🛠️ Creating Thing with payload: $CREATE_PAYLOAD"
 
             # Create Thing
-            CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID?response-required=false&channel=live" \
+            CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$DITTO_HOST/api/2/things/$THING_ID" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/json" \
               --data-raw "$CREATE_PAYLOAD")
@@ -99,7 +99,7 @@ jobs:
             echo "✅ Thing [$THING_ID] created with WoT TD"
 
             # Patch attributes
-            PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID" \
+            PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH "$DITTO_HOST/api/2/things/$THING_ID?response-required=false&channel=live" \
               -H "Authorization: Bearer $DITTO_AUTH" \
               -H "Content-Type: application/merge-patch+json" \
               -d "{\"attributes\": $ATTRIBUTES}")
