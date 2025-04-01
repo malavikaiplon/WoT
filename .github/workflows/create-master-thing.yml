@@ -53,6 +53,7 @@ jobs:
 
             # 🛠️ Use GitHub API to fetch signed raw URL of masterthing.json from private repo
             API_URL="https://api.github.com/repos/$ORG_NAME/$REPO_NAME/contents/FoxESS_inverter/masterthing.json?ref=refs/heads/$BRANCH_NAME"
+            CLOUD_TD="http://ritter-dev-apache.coreapps.svc.cluster.local:8080/masterthing.json
             TD_URL=$(curl -s -H "Authorization: token $GH_PAT" "$API_URL" | jq -r '.download_url')
 
           if [[ "$TD_URL" == "null" || -z "$TD_URL" ]]; then
@@ -75,7 +76,7 @@ jobs:
             # Build Thing creation payload
             CREATE_PAYLOAD=$(jq -n \
               --arg pid "$POLICY_ID" \
-              --arg def "$TD_URL" \
+              --arg def "$CLOUD_TD" \
               '{policyId: $pid, definition: $def}')
 
             echo "🛠️ Creating Thing with payload: $CREATE_PAYLOAD"
