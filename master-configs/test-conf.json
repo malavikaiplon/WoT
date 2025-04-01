@@ -1,15 +1,17 @@
     {
   "tenant": "iplon",
-  "gateway": "create",
+  "gateway": "INVH3",
   "location": "Germany",
   "manufacturer": "Ritter-Energie",
   "policyId": "device.test:policy",
-  "master":"test",
+  "master":"MAS0013",
+ "type": "FoxESS",
+ "model": "H3",
   "devices": [
       {
         "apiVersion": "v3",
         "device": {
-          "name": "iplon.FLD1235:MAS0012",
+          "name": "iplon.FLD2255:MAS0012",
           "description": "FoxESS inverter via Modbus TCP",
           "adminState": "UNLOCKED",
           "operatingState": "UP",
@@ -41,7 +43,7 @@
        {
         "apiVersion": "v3",
         "device": {
-          "name": "iplon.FLD1237:MAS0012",
+          "name": "iplon.FLD2233:MAS0012",
           "description": "FoxESS inverter via Modbus TCP",
           "adminState": "UNLOCKED",
           "operatingState": "UP",
@@ -73,7 +75,7 @@
       {
         "apiVersion": "v3",
         "device": {
-          "name": "iplon.FLD1236:MAS0012",
+          "name": "iplon.FLD2244:MAS0012",
           "description": "FoxESS inverter via Modbus RTU",
           "adminState": "UNLOCKED",
           "operatingState": "UP",
