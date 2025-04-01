@@ -2,7 +2,7 @@
   "tenant": "iplon",
   "gateway": "INVH3",
   "location": "Germany",
-  "manufacturer": "Ritter-Energie ",
+  "manufacturer": "Ritter-Energie",
   "policyId": "device.test:policy",
   "master":"MAS0013",
  "type": "FoxESS",
