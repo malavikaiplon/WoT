@@ -12,7 +12,7 @@
         "apiVersion": "v3",
         "device": {
           "name": "iplon.FLD2255:MAS0012",
-          "description": "FoxESS inverter via Modbus TCP",
+          "description": "FoxESS inverter via Modbus TCP/IP",
           "adminState": "UNLOCKED",
           "operatingState": "UP",
           "labels": [
