@@ -1,10 +1,10 @@
     {
-  "tenant": "iplon",
-  "gateway": "INVH3",
+  "tenant": "PROD",
+  "gateway": "ROUTE",
   "location": "Germany",
   "manufacturer": "Ritter-Energie ",
   "policyId": "device.test:policy",
-  "master":"MAS0013",
+  "master":"12567",
  "type": "FoxESS",
  "model": "H3",
   "devices": [
