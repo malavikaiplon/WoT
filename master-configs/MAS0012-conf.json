@@ -2,7 +2,7 @@
   "tenant": "PROD",
   "gateway": "ROUTE",
   "location": "Germany",
-  "manufacturer": "Ritter-Energie ",
+  "manufacturer": "Ritter-Energie",
   "policyId": "device.test:policy",
   "master":"1734"
 }
