@@ -1,8 +1,8 @@
 {
-  "tenant": "iplon",
-  "gateway": "INV1567",
+  "tenant": "PROD",
+  "gateway": "ROUTE",
   "location": "Germany",
   "manufacturer": "Ritter-Energie ",
   "policyId": "device.test:policy",
-  "master":"MAS0012"
+  "master":"1734"
 }
